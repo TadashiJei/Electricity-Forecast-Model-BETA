@@ -32,10 +32,6 @@ For additional details and previous information on the project, please refer to 
    pip install -r requirements.txt
    ```
 
-3. **Environment Setup**
-
-   Configure environment variables by creating a `.env` file at the root of the project. Key configurations may include database URLs, API keys, and model paths.
-
 ---
 
 ## Running the API

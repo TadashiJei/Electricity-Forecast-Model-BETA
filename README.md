@@ -1,249 +1,253 @@
-# Electricity Forecast Model Integration Guide
+# Electricity Consumption Forecast - FlutterFlow Integration Guide
 
-This repository contains a machine learning model for electricity forecasting, integrated with FastAPI backend and Flutter/FlutterFlow frontend.
+A comprehensive guide for integrating the Electricity Consumption Forecast model into your FlutterFlow project.
 
 ## Table of Contents
-- [Prerequisites](#prerequisites)
-- [Project Structure](#project-structure)
-- [Model Export](#model-export)
-- [Backend Setup](#backend-setup)
-- [Frontend Integration](#frontend-integration)
+- [Quick Start](#quick-start)
 - [FlutterFlow Integration](#flutterflow-integration)
-- [API Documentation](#api-documentation)
-- [Model Features](#model-features)
+- [Features](#features)
+- [Error Handling](#error-handling)
+- [Data Persistence](#data-persistence)
+- [Advanced Usage](#advanced-usage)
 - [Troubleshooting](#troubleshooting)
 
-## Prerequisites
-- Python 3.7+
-- Flutter SDK
-- FlutterFlow account
-- Google Colab (for model training)
-- FastAPI
-- Joblib
+## Quick Start
 
-## Project Structure
-```
-├── main.py                         # FastAPI backend server
-├── electricity_service.dart        # Flutter service for API calls
-├── electricity_forecast_model.joblib # Trained ML model
-└── requirements.txt                # Python dependencies
-```
-
-## Model Features
-The model expects the following 8 features in this exact order:
-
-1. **Hour of Day** (0-23)
-   - Integer value representing the hour of the day
-   - Example: 14 (2:00 PM)
-
-2. **Temperature** (°C)
-   - Float value of the temperature in Celsius
-   - Example: 25.5
-
-3. **Humidity** (%)
-   - Float value of relative humidity percentage
-   - Example: 65.0
-
-4. **Wind Speed** (km/h)
-   - Float value of wind speed in kilometers per hour
-   - Example: 12.3
-
-5. **General Diffuse Flows** (W/m²)
-   - Float value measuring solar radiation
-   - Example: 100.5
-
-6. **Diffuse Flows** (W/m²)
-   - Float value of diffuse solar radiation
-   - Example: 80.2
-
-7. **Day of Week** (0-6)
-   - Integer value representing the day of the week
-   - 0 = Monday, 6 = Sunday
-   - Example: 2 (Wednesday)
-
-8. **Month** (1-12)
-   - Integer value representing the month
-   - Example: 7 (July)
-
-### Example Feature List
-```python
-features = [
-    14,     # Hour: 2 PM
-    25.5,   # Temperature: 25.5°C
-    65.0,   # Humidity: 65%
-    12.3,   # Wind Speed: 12.3 km/h
-    100.5,  # General Diffuse Flows: 100.5 W/m²
-    80.2,   # Diffuse Flows: 80.2 W/m²
-    2,      # Day of Week: Wednesday
-    7       # Month: July
-]
-```
-
-## Model Export
-1. Open your model in Google Colab
-2. Add the following code at the end of your notebook:
-```python
-import joblib
-
-# Save the model
-joblib.dump(model, 'electricity_forecast_model.joblib')
-
-# Download to local machine
-from google.colab import files
-files.download('electricity_forecast_model.joblib')
-```
-3. Run the cell and save the downloaded model file
-
-## Backend Setup
-
-1. Install required Python packages:
-```bash
-pip install fastapi uvicorn joblib numpy pydantic scikit-learn
-```
-
-2. Place your `electricity_forecast_model.joblib` file in the same directory as `main.py`
-
-3. Start the FastAPI server:
-```bash
-python main.py
-```
-
-4. The API will be available at `http://localhost:8000`
-
-### Deploy to Production
-1. Choose a cloud provider (e.g., Heroku, Google Cloud, or AWS)
-2. Deploy the FastAPI application
-3. Note down your deployed API URL
-
-## Frontend Integration
-
-### Flutter Service Setup
-1. Add HTTP dependency to your `pubspec.yaml`:
+1. **Add Dependencies** to your FlutterFlow project:
 ```yaml
 dependencies:
   http: ^0.13.0
+  shared_preferences: ^2.0.0
 ```
 
-2. Update the `baseUrl` in `electricity_service.dart` with your deployed API URL:
-```dart
-final String baseUrl = 'https://your-deployed-api.com';
-```
+2. **Import Custom Code Files**:
+- `electricity_service.dart`
+- `prediction_storage.dart`
+- `error_handler.dart`
+- `flutterflow_example.dart`
 
-### Example API Usage in Flutter
-```dart
-final features = [
-    14,     // Hour
-    25.5,   // Temperature
-    65.0,   // Humidity
-    12.3,   // Wind Speed
-    100.5,  // General Diffuse Flows
-    80.2,   // Diffuse Flows
-    2,      // Day of Week
-    7       // Month
-];
-
-final prediction = await electricityService.getForecast(features);
-print('Predicted electricity consumption: ${prediction.toStringAsFixed(2)} kWh');
-```
+3. **Configure API Endpoint**:
+Update `baseUrl` in `electricity_service.dart` with your API endpoint.
 
 ## FlutterFlow Integration
 
-1. **Custom Code Integration**:
-   - In FlutterFlow, go to Custom Code section
-   - Add `electricity_service.dart` as a custom code file
+### Step 1: Create Custom Widget
 
-2. **Action Setup**:
-   - Create a new action in FlutterFlow
-   - Use the following code snippet:
+1. In FlutterFlow, go to **Custom Code** section
+2. Add new Custom Widget
+3. Name it "ElectricityForecastWidget"
+4. Import the widget code
+
+### Step 2: Add to FlutterFlow Page
+
+1. Drag a **Custom Widget** component onto your page
+2. Select "ElectricityForecastWidget" from the dropdown
+3. Configure widget properties if needed
+
+### Step 3: Create Actions
+
+1. Create a new Action in FlutterFlow
+2. Add the following code:
+
 ```dart
+// Initialize services
 final electricityService = ElectricityService();
+final predictionStorage = PredictionStorage();
+
 try {
+  // Get prediction
   final prediction = await electricityService.getForecast([
-    hourController.value,          // Hour
-    temperatureController.value,   // Temperature
-    humidityController.value,      // Humidity
-    windSpeedController.value,     // Wind Speed
-    diffuseFlowsGenController.value, // General Diffuse Flows
-    diffuseFlowsController.value,  // Diffuse Flows
-    dayOfWeekController.value,     // Day of Week
-    monthController.value          // Month
+    FFAppState().hour,
+    FFAppState().temperature,
+    FFAppState().humidity,
+    FFAppState().windSpeed,
+    FFAppState().diffuseFlowsGen,
+    FFAppState().diffuseFlows,
+    FFAppState().dayOfWeek,
+    FFAppState().month,
   ]);
-  // Use the prediction value in your UI
+
+  // Save prediction
+  await predictionStorage.savePrediction(
+    features: features,
+    prediction: prediction,
+    timestamp: DateTime.now(),
+  );
+
+  // Update UI
+  setState(() {
+    FFAppState().lastPrediction = prediction;
+  });
+
 } catch (e) {
-  // Handle error
+  final error = ErrorHandler.handleApiError(e);
+  FFAppState().lastError = ErrorHandler.getUserFriendlyMessage(error);
 }
 ```
 
-3. **UI Integration**:
-   - Create input fields for all 8 features
-   - Add validation for each input field
-   - Add a button to trigger the prediction
-   - Create a display widget for the prediction result
+## Features
 
-## API Documentation
-
-### Predict Endpoint
-- **URL**: `/predict`
-- **Method**: POST
-- **Request Body**:
-```json
-{
-  "features": [14, 25.5, 65.0, 12.3, 100.5, 80.2, 2, 7]
-}
-```
-- **Response**:
-```json
-{
-  "prediction": 45.67
-}
-```
-
-## Input Validation
-Ensure your input values are within these ranges:
+### Input Validation
 - Hour: 0-23 (integer)
-- Temperature: -20 to 50 (float)
-- Humidity: 0-100 (float)
-- Wind Speed: 0-150 (float)
-- General Diffuse Flows: 0-1500 (float)
-- Diffuse Flows: 0-1500 (float)
+- Temperature: -20 to 50°C (float)
+- Humidity: 0-100% (float)
+- Wind Speed: 0-150 km/h (float)
+- General Diffuse Flows: 0-1500 W/m² (float)
+- Diffuse Flows: 0-1500 W/m² (float)
 - Day of Week: 0-6 (integer)
 - Month: 1-12 (integer)
 
+### Data Persistence
+The app stores the last 50 predictions with:
+- Input features
+- Prediction result
+- Timestamp
+
+### Error Handling
+Comprehensive error handling for:
+- Validation errors
+- Network issues
+- Server errors
+- Timeout errors
+- Unknown errors
+
+## Advanced Usage
+
+### Accessing Historical Predictions
+
+```dart
+final predictionStorage = PredictionStorage();
+final predictions = await predictionStorage.getPredictions();
+
+// Display in ListView
+ListView.builder(
+  itemCount: predictions.length,
+  itemBuilder: (context, index) {
+    final prediction = predictions[index];
+    return ListTile(
+      title: Text('${prediction['prediction']} kWh'),
+      subtitle: Text(DateTime.parse(prediction['timestamp']).toString()),
+    );
+  },
+);
+```
+
+### Custom Error Handling
+
+```dart
+try {
+  // Your prediction code
+} catch (e) {
+  final error = ErrorHandler.handleApiError(e);
+  
+  switch (error.code) {
+    case 'VALIDATION_ERROR':
+      // Show validation error UI
+      break;
+    case 'NETWORK_ERROR':
+      // Show network error UI
+      break;
+    // Handle other cases
+  }
+}
+```
+
+## Error Handling Scenarios
+
+### 1. Input Validation Errors
+- Invalid number format
+- Out of range values
+- Missing required fields
+
+### 2. Network Errors
+- No internet connection
+- Weak connection
+- API endpoint unreachable
+
+### 3. Server Errors
+- Internal server error (500)
+- Service unavailable (503)
+- Bad gateway (502)
+
+### 4. Data Errors
+- Invalid response format
+- Missing response data
+- Corrupted data
+
+### 5. Authentication Errors
+- Invalid API key
+- Expired token
+- Unauthorized access
+
 ## Troubleshooting
 
-### Common Issues
-1. **Model Loading Error**:
-   - Ensure the model file is in the correct location
-   - Verify model file permissions
-   - Check if all scikit-learn dependencies are installed
+### Common Issues and Solutions
 
-2. **API Connection Issues**:
-   - Check if the API URL is correct
-   - Verify network connectivity
-   - Ensure CORS is properly configured
+1. **Widget Not Updating**
+   ```dart
+   // Force widget update
+   setState(() {});
+   ```
 
-3. **Prediction Errors**:
-   - Verify all 8 features are provided in the correct order
-   - Check if feature values are within expected ranges
-   - Ensure numeric types are correct (integers/floats)
+2. **Data Not Persisting**
+   ```dart
+   // Check if storage is working
+   final prefs = await SharedPreferences.getInstance();
+   print(await prefs.getString('electricity_predictions'));
+   ```
 
-### Support
+3. **Network Errors**
+   ```dart
+   // Add timeout
+   final response = await http.post(
+     Uri.parse('$baseUrl/predict'),
+     headers: {'Content-Type': 'application/json'},
+     body: jsonEncode({'features': features}),
+   ).timeout(Duration(seconds: 10));
+   ```
+
+### Best Practices
+
+1. **Input Validation**
+   - Always validate inputs before API calls
+   - Show clear error messages
+   - Provide input format hints
+
+2. **Error Handling**
+   - Use try-catch blocks
+   - Show user-friendly error messages
+   - Log errors for debugging
+
+3. **Data Persistence**
+   - Regular data cleanup
+   - Version control for stored data
+   - Error handling for storage operations
+
+4. **Performance**
+   - Cache frequent predictions
+   - Batch API calls when possible
+   - Optimize UI updates
+
+## Support
+
 For additional support:
-1. Check the FastAPI documentation
-2. Visit FlutterFlow documentation
-3. Review the model training notebook in Google Colab
+1. Check FlutterFlow documentation
+2. Review API documentation
+3. Contact support team
 
 ## Security Considerations
-1. Implement proper authentication
-2. Secure your API endpoints
-3. Validate input data ranges
-4. Use HTTPS in production
-5. Handle sensitive data appropriately
 
-## Performance Optimization
-1. Cache frequent predictions
-2. Implement batch processing if needed
-3. Optimize model size and loading
-4. Use appropriate instance sizes for deployment
+1. **API Security**
+   - Use HTTPS
+   - Implement rate limiting
+   - Validate all inputs
 
-Remember to replace placeholder values and customize the documentation according to your specific deployment setup.
+2. **Data Storage**
+   - Encrypt sensitive data
+   - Regular data cleanup
+   - Secure shared preferences
+
+3. **Error Logging**
+   - Remove sensitive data from logs
+   - Implement proper error tracking
+   - Monitor API usage

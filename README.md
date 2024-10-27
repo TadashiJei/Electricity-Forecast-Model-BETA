@@ -245,5 +245,3 @@ For additional support:
 2. Implement batch processing if needed
 3. Optimize model size and loading
 4. Use appropriate instance sizes for deployment
-
-Remember to replace placeholder values and customize the documentation according to your specific deployment setup.
